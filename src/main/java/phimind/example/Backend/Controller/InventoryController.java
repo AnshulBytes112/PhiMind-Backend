@@ -5,6 +5,7 @@ import phimind.example.Backend.dto.InventoryItemResponse;
 import phimind.example.Backend.dto.StockInRequest;
 import phimind.example.Backend.dto.StockOutRequest;
 import phimind.example.Backend.dto.ApiResponse;
+import phimind.example.Backend.dto.PaginationResponse;
 import phimind.example.Backend.Service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/inventory")
@@ -35,10 +35,12 @@ public class InventoryController {
     }
     
     @GetMapping("/items")
-    public ResponseEntity<ApiResponse<List<InventoryItemResponse>>> getAllInventoryItems() {
+    public ResponseEntity<ApiResponse<PaginationResponse<InventoryItemResponse>>> getAllInventoryItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         try {
-            List<InventoryItemResponse> items = inventoryService.getAllInventoryItems();
-            return ResponseEntity.ok(ApiResponse.success("Inventory items retrieved successfully", items));
+            PaginationResponse<InventoryItemResponse> paginatedItems = inventoryService.getAllInventoryItemsPaginated(page, size);
+            return ResponseEntity.ok(ApiResponse.success("Inventory items retrieved successfully", paginatedItems));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
