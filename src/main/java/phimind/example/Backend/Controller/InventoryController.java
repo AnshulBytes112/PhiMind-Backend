@@ -15,9 +15,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/inventory")
+@Tag(name = "Inventory Management", description = "Inventory items CRUD operations and stock management")
 public class InventoryController {
     
     @Autowired
@@ -25,7 +32,28 @@ public class InventoryController {
     
     @PostMapping("/items")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<InventoryItemResponse>> createInventoryItem(@Valid @RequestBody InventoryItemRequest request) {
+    @Operation(
+        summary = "Create inventory item",
+        description = "Creates a new inventory item with initial stock quantity. Requires ADMIN role."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Inventory item created successfully",
+            content = @Content(schema = @Schema(implementation = phimind.example.Backend.dto.ApiResponse.class))
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Invalid input or item already exists"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "403",
+            description = "Access denied - ADMIN role required"
+        )
+    })
+    public ResponseEntity<ApiResponse<InventoryItemResponse>> createInventoryItem(
+            @Parameter(description = "Inventory item details", required = true)
+            @Valid @RequestBody InventoryItemRequest request) {
         try {
             InventoryItemResponse response = inventoryService.createInventoryItem(request);
             return ResponseEntity.ok(ApiResponse.success("Inventory item created successfully", response));
@@ -35,8 +63,25 @@ public class InventoryController {
     }
     
     @GetMapping("/items")
+    @Operation(
+        summary = "Get all inventory items (paginated)",
+        description = "Retrieves inventory items with pagination support for efficient data access"
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Inventory items retrieved successfully",
+            content = @Content(schema = @Schema(implementation = phimind.example.Backend.dto.ApiResponse.class))
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Invalid pagination parameters"
+        )
+    })
     public ResponseEntity<ApiResponse<PaginationResponse<InventoryItemResponse>>> getAllInventoryItems(
+            @Parameter(description = "Page number (0-based)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of items per page", example = "10")
             @RequestParam(defaultValue = "10") int size) {
         try {
             PaginationResponse<InventoryItemResponse> paginatedItems = inventoryService.getAllInventoryItemsPaginated(page, size);
@@ -82,8 +127,29 @@ public class InventoryController {
     
     @PostMapping("/items/{id}/stock-in")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        summary = "Add stock to inventory item",
+        description = "Adds stock to an existing inventory item. Requires ADMIN role."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Stock added successfully",
+            content = @Content(schema = @Schema(implementation = phimind.example.Backend.dto.ApiResponse.class))
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Invalid input or item not found"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "403",
+            description = "Access denied - ADMIN role required"
+        )
+    })
     public ResponseEntity<ApiResponse<InventoryItemResponse>> addStock(
+            @Parameter(description = "Inventory item ID", required = true, example = "507f1f77bcf86cd799439011")
             @PathVariable String id, 
+            @Parameter(description = "Stock addition details", required = true)
             @Valid @RequestBody StockInRequest request) {
         try {
             // Get current user ID from security context
@@ -99,8 +165,29 @@ public class InventoryController {
     
     @PostMapping("/items/{id}/stock-out")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        summary = "Remove stock from inventory item",
+        description = "Reduces stock from an inventory item. Ensures stock does not go below zero. Requires ADMIN role."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Stock removed successfully",
+            content = @Content(schema = @Schema(implementation = phimind.example.Backend.dto.ApiResponse.class))
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Invalid input, insufficient stock, or item not found"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "403",
+            description = "Access denied - ADMIN role required"
+        )
+    })
     public ResponseEntity<ApiResponse<InventoryItemResponse>> removeStock(
+            @Parameter(description = "Inventory item ID", required = true, example = "507f1f77bcf86cd799439011")
             @PathVariable String id, 
+            @Parameter(description = "Stock removal details", required = true)
             @Valid @RequestBody StockOutRequest request) {
         try {
             // Get current user ID from security context
