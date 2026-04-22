@@ -2,11 +2,14 @@ package phimind.example.Backend.Controller;
 
 import phimind.example.Backend.dto.InventoryItemRequest;
 import phimind.example.Backend.dto.InventoryItemResponse;
+import phimind.example.Backend.dto.StockInRequest;
 import phimind.example.Backend.dto.ApiResponse;
 import phimind.example.Backend.Service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -69,6 +72,23 @@ public class InventoryController {
         try {
             inventoryService.deleteInventoryItem(id);
             return ResponseEntity.ok(ApiResponse.success("Inventory item deleted successfully", "Item with id " + id + " has been deleted"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/items/{id}/stock-in")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<InventoryItemResponse>> addStock(
+            @PathVariable String id, 
+            @Valid @RequestBody StockInRequest request) {
+        try {
+            // Get current user ID from security context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userId = authentication.getName();
+            
+            InventoryItemResponse response = inventoryService.addStock(id, request, userId);
+            return ResponseEntity.ok(ApiResponse.success("Stock added successfully", response));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }

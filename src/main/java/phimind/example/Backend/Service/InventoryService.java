@@ -1,9 +1,12 @@
 package phimind.example.Backend.Service;
 
 import phimind.example.Backend.Repository.InventoryItemRepository;
+import phimind.example.Backend.Repository.StockTransactionRepository;
 import phimind.example.Backend.model.InventoryItem;
+import phimind.example.Backend.model.StockTransaction;
 import phimind.example.Backend.dto.InventoryItemRequest;
 import phimind.example.Backend.dto.InventoryItemResponse;
+import phimind.example.Backend.dto.StockInRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,9 @@ public class InventoryService {
     
     @Autowired
     private InventoryItemRepository inventoryItemRepository;
+    
+    @Autowired
+    private StockTransactionRepository stockTransactionRepository;
     
     public InventoryItemResponse createInventoryItem(InventoryItemRequest request) {
         if (inventoryItemRepository.existsByName(request.getName())) {
@@ -62,5 +68,29 @@ public class InventoryService {
             throw new RuntimeException("Item not found with id: " + id);
         }
         inventoryItemRepository.deleteById(id);
+    }
+    
+    public InventoryItemResponse addStock(String id, StockInRequest request, String userId) {
+        InventoryItem item = inventoryItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Item not found with id: " + id));
+        
+        // Update item quantity
+        int newQuantity = item.getQuantity() + request.getQuantity();
+        item.setQuantity(newQuantity);
+        
+        // Save updated item
+        InventoryItem updatedItem = inventoryItemRepository.save(item);
+        
+        // Log transaction
+        StockTransaction transaction = new StockTransaction(
+                id,
+                StockTransaction.TransactionType.STOCK_IN,
+                request.getQuantity(),
+                request.getReason(),
+                userId
+        );
+        stockTransactionRepository.save(transaction);
+        
+        return InventoryItemResponse.fromInventoryItem(updatedItem);
     }
 }
