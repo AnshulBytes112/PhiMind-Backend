@@ -3,6 +3,7 @@ package phimind.example.Backend.Controller;
 import phimind.example.Backend.dto.InventoryItemRequest;
 import phimind.example.Backend.dto.InventoryItemResponse;
 import phimind.example.Backend.dto.StockInRequest;
+import phimind.example.Backend.dto.StockOutRequest;
 import phimind.example.Backend.dto.ApiResponse;
 import phimind.example.Backend.Service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +90,23 @@ public class InventoryController {
             
             InventoryItemResponse response = inventoryService.addStock(id, request, userId);
             return ResponseEntity.ok(ApiResponse.success("Stock added successfully", response));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/items/{id}/stock-out")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<InventoryItemResponse>> removeStock(
+            @PathVariable String id, 
+            @Valid @RequestBody StockOutRequest request) {
+        try {
+            // Get current user ID from security context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userId = authentication.getName();
+            
+            InventoryItemResponse response = inventoryService.removeStock(id, request, userId);
+            return ResponseEntity.ok(ApiResponse.success("Stock removed successfully", response));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
