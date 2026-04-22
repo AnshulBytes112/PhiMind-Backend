@@ -2,6 +2,8 @@ package phimind.example.Backend.Service;
 
 import phimind.example.Backend.dto.RegistrationRequest;
 import phimind.example.Backend.dto.RegistrationResponse;
+import phimind.example.Backend.dto.LoginRequest;
+import phimind.example.Backend.dto.LoginResponse;
 import phimind.example.Backend.model.User;
 import phimind.example.Backend.model.Role;
 import phimind.example.Backend.Repository.UserRepository;
@@ -54,6 +56,30 @@ public class UserService {
             savedUser.getId(),
             savedUser.getEmail(),
             savedUser.getRole().name(),
+            token
+        );
+    }
+    
+    public LoginResponse loginUser(LoginRequest request) {
+        if (!isValidEmail(request.getEmail())) {
+            return LoginResponse.error("Invalid email format");
+        }
+        
+        User user = userRepository.findByEmail(request.getEmail());
+        if (user == null) {
+            return LoginResponse.error("Email not found");
+        }
+        
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return LoginResponse.error("Invalid password");
+        }
+        
+        String token = jwtUtil.generateToken(user);
+        
+        return LoginResponse.success(
+            user.getId(),
+            user.getEmail(),
+            user.getRole().name(),
             token
         );
     }
