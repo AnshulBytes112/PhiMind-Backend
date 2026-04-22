@@ -6,6 +6,7 @@ import phimind.example.Backend.dto.LoginRequest;
 import phimind.example.Backend.dto.LoginResponse;
 import phimind.example.Backend.dto.RegistrationRequest;
 import phimind.example.Backend.dto.RegistrationResponse;
+import phimind.example.Backend.dto.ApiResponse;
 import phimind.example.Backend.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,11 +53,12 @@ public class AuthControllerTest {
         
         when(userService.registerUser(any(RegistrationRequest.class))).thenReturn(registrationResponse);
         
-        ResponseEntity<RegistrationResponse> response = authController.registerUser(registrationRequest);
+        ResponseEntity<ApiResponse<RegistrationResponse>> response = authController.registerUser(registrationRequest);
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("jwt-token", response.getBody().getToken());
+        assertTrue(response.getBody().isSuccess());
+        assertEquals("jwt-token", response.getBody().getData().getToken());
         verify(userService, times(1)).registerUser(any(RegistrationRequest.class));
     }
     
@@ -66,7 +68,7 @@ public class AuthControllerTest {
         
         when(userService.registerUser(any(RegistrationRequest.class))).thenReturn(registrationResponse);
         
-        ResponseEntity<RegistrationResponse> response = authController.registerUser(registrationRequest);
+        ResponseEntity<ApiResponse<RegistrationResponse>> response = authController.registerUser(registrationRequest);
         
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Email already exists", response.getBody().getMessage());
@@ -79,11 +81,12 @@ public class AuthControllerTest {
         
         when(userService.loginUser(any(LoginRequest.class))).thenReturn(loginResponse);
         
-        ResponseEntity<LoginResponse> response = authController.loginUser(loginRequest);
+        ResponseEntity<ApiResponse<LoginResponse>> response = authController.loginUser(loginRequest);
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("jwt-token", response.getBody().getToken());
+        assertTrue(response.getBody().isSuccess());
+        assertEquals("jwt-token", response.getBody().getData().getToken());
         verify(userService, times(1)).loginUser(any(LoginRequest.class));
     }
     
@@ -93,7 +96,7 @@ public class AuthControllerTest {
         
         when(userService.loginUser(any(LoginRequest.class))).thenReturn(loginResponse);
         
-        ResponseEntity<LoginResponse> response = authController.loginUser(loginRequest);
+        ResponseEntity<ApiResponse<LoginResponse>> response = authController.loginUser(loginRequest);
         
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Invalid password", response.getBody().getMessage());
