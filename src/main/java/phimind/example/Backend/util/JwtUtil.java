@@ -46,6 +46,10 @@ public class JwtUtil {
         return claims.get("userId", String.class);
     }
     
+    public String extractUsername(String token) {
+        return getUserIdFromToken(token);
+    }
+    
     public String getRoleFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
